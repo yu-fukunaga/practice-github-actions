@@ -1,0 +1,13 @@
+name: Continuous Integration
+on: push
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Run unit tests
+        run: go test ./...
