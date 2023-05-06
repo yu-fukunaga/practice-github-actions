@@ -6,10 +6,8 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3 # Checkout the code in the action runner
       - name: Version check
         run: go version
-      - name: Install dependencies
-        run: go mod tidy
       - name: Run unit tests
         run: go test ./...
