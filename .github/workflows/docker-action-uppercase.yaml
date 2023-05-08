@@ -1,0 +1,10 @@
+name: Run Docker Action Uppercase
+on: push
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    name: Uppercase
+    steps:
+      - name: Uppercase
+        uses: yu-fukunaga/practice-github-docker-action@v1.0.0
