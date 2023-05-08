@@ -1,0 +1,10 @@
+name: Run Javascript Action Hello
+on: push
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    name: Hello
+    steps:
+      - name: Hello
+        uses: yu-fukunaga/practice-github-javascript-actions@v1.0.0
