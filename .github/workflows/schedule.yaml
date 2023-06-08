@@ -1,0 +1,12 @@
+name: Schedule
+on: 
+  schedule:
+    - cron: '* * * * *'
+  
+jobs:
+  torigger:
+    name: Greeting
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Hello, Schedule!"
+
