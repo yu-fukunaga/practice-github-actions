@@ -5,6 +5,14 @@ env:
   GO_VERSION: "1.20.1"
 
 jobs:
+  github_env:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "HOGE=hoge" >> $GITHUB_ENV
+      - run: echo "FUGA=fuga" >> $GITHUB_ENV
+      - run: echo ${{env.HOGE}} # => test
+      - run: echo "$FUGA" # => test
+
   unit-tests:
     name: unit tests
     runs-on: ubuntu-latest
