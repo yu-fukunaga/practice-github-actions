@@ -1,0 +1,13 @@
+name: dispatch test
+
+on:
+    repository_dispatch:
+      types: [ test ]
+  
+jobs:
+  torigger:
+    name: Greeting
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "Hello, World!"
+
