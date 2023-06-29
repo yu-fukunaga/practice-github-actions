@@ -9,6 +9,8 @@ set -o xtrace
 touch sample.txt
 
 git status
+CHANGED=$(git diff --name-only)
+
 
 if [[ ${CHANGED} -eq 0 ]]; then
     exit
