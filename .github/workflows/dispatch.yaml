@@ -16,3 +16,4 @@ jobs:
           repository: yu-fukunaga/practice-github-actions
           event-type: test 
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+        
