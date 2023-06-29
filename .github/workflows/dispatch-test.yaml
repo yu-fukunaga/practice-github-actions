@@ -11,4 +11,5 @@ jobs:
     steps:
       - run: echo "Hello, World!"
       - uses: actions/checkout@v3 # Checkout the code in the action runner
+      - run: ls
       - run: BRANCH=test-dispatch-workflow-auto-commit ./scripts/commit.sh
