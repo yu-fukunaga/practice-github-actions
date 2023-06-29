@@ -1,3 +1,11 @@
+#!/bin/bash
+
+## commit & push generated document file in CI
+
+set -o nounset
+set -o pipefail
+set -o xtrace
+
 touch sample.txt
 
 git status
