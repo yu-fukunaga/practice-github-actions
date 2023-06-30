@@ -11,7 +11,9 @@ touch sample.txt
 git config --local user.email "action@github.com"
 git config --local user.name "GitHub Action"
 
-git remote add work https://github.com/yu-fukunaga/practice-github-actions
+export GITHUB_TOKEN=${GITHUB_TOKEN}
+
+git remote add work https://x-access-token:${GITHUB_TOKEN}@github.com/yu-fukunaga/practice-github-actions
 git fetch work
 git checkout -q -b ${BRANCH} --track work/${BRANCH}
 git status
