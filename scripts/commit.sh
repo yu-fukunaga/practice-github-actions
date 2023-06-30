@@ -15,5 +15,6 @@ git remote add work https://github.com/yu-fukunaga/practice-github-actions
 git fetch work
 git checkout -q -b ${BRANCH} --track work/${BRANCH}
 git status
+git add .
 git commit -m "Auto commit"
 git push work ${BRANCH}
