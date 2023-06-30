@@ -6,12 +6,15 @@ on:
   
 jobs:
   torigger:
-    name: Greeting
+    name: Commit
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello, World!"
       - uses: actions/checkout@v3 # Checkout the code in the action runner
-      - run: ls
-      - run: BRANCH=test-dispatch-workflow-auto-commit ./scripts/commit.sh
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - run: BRANCH=test-dispatch-workflow-auto-commit ./scripts/commit.sh
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: touch sample.txt
+      - uses: stefanzweifel/git-auto-commit-action@v4.2.0
+        with:
+          commit_message: Commit!!!!! 
