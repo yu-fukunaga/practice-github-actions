@@ -11,4 +11,4 @@ git config --local user.name "GitHub Action"
 git status
 git add .
 git commit -m "Auto commit"
-git push origin ${BRANCH}
+git push git@github.com:yu-fukunaga/practice-github-actions.git ${BRANCH}
