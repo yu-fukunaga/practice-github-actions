@@ -6,7 +6,10 @@ on:
   
 jobs:
   torigger:
-    name: Greeting
+    name: commit
+    permissions:
+      id-token: write # Required for issue-github-token
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello, World!"
