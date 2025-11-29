@@ -1,4 +1,4 @@
-name: check-release-pr
+name: Check Release PR
 
 on:
   push:
