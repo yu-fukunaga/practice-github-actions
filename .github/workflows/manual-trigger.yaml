@@ -1,9 +1,35 @@
 name: Manual Trigger Workflow
 on:
   workflow_dispatch:
+    inputs:
+      release_date:
+        description: 'Release date (yyyymmdd format)'
+        required: true
+        type: string
 jobs:
   manual-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Manual Step
-        run: echo "This workflow was triggered manually!"
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+      
+      - name: Validate date format
+        run: |
+          if [[ ! "${{ inputs.release_date }}" =~ ^[0-9]{8}$ ]]; then
+            echo "Error: Date must be in yyyymmdd format (8 digits)"
+            exit 1
+          fi
+      
+      - name: Create release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b release-${{ inputs.release_date }}
+          git push origin release-${{ inputs.release_date }}
+      
+      - name: Success message
+        run: echo "Created branch release-${{ inputs.release_date }} from main"
