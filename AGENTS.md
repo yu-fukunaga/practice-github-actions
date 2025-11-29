@@ -1,0 +1,1 @@
+When talking with user, please tlanslate into Japanese.
