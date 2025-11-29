@@ -63,7 +63,7 @@ jobs:
         with:
           script: |
             const branch = process.env.RELEASE_BRANCH;
-            const title = `Release: ${branch} -> main`;
+            const title = branch;
             const body = `Automated release PR created by workflow.\n\nSource: \`${branch}\`\nTarget: \`main\``;
             try {
               const { data: pr } = await github.rest.pulls.create({
