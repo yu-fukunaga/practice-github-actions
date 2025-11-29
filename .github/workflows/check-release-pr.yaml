@@ -1,6 +1,11 @@
 name: Check Release PR
 
 on:
+  workflow_run:
+    workflows:
+      - Create Release PR
+    types:
+      - completed
   pull_request:
     types: [opened]
     branches:
@@ -9,24 +14,126 @@ on:
 jobs:
   validate:
     name: Validate release PR
-    if: startsWith(github.head_ref, 'release-')
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
+      - name: Use PR context (pull_request event)
+        id: from_pr
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "branch=${GITHUB_HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Find latest open release PR to main
+        id: find_pr
+        if: github.event_name == 'workflow_run'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 10,
+            });
+            const target = prs.find(pr => pr.head.ref.startsWith('release-'));
+            if (!target) {
+              core.setFailed('No open release PR (head release-*) targeting main found.');
+              return;
+            }
+            core.info(`Found PR #${target.number} from ${target.head.ref}`);
+            core.setOutput('branch', target.head.ref);
+            core.setOutput('pr_number', target.number.toString());
+
+      - name: Select PR info
+        id: pr_info
+        env:
+          FROM_BRANCH: ${{ steps.from_pr.outputs.branch }}
+          FROM_PR: ${{ steps.from_pr.outputs.pr_number }}
+          FOUND_BRANCH: ${{ steps.find_pr.outputs.branch }}
+          FOUND_PR: ${{ steps.find_pr.outputs.pr_number }}
+        run: |
+          branch="${FROM_BRANCH:-$FOUND_BRANCH}"
+          pr_number="${FROM_PR:-$FOUND_PR}"
+
+          if [ -z "$branch" ] || [ -z "$pr_number" ]; then
+            echo "PR info missing."
+            exit 1
+          fi
+
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+
       - name: Validate release branch name
         env:
-          BRANCH_NAME: ${{ github.head_ref }}
+          BRANCH_NAME: ${{ steps.pr_info.outputs.branch }}
         run: |
           if [[ ! "$BRANCH_NAME" =~ ^release-[0-9]{8}(-[0-9]+)?$ ]]; then
             echo "Branch '$BRANCH_NAME' does not match release-yyyymmdd or release-yyyymmdd-N."
             exit 1
           fi
 
-      - name: Checkout PR head
+      - name: Checkout release branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ steps.pr_info.outputs.branch }}
           fetch-depth: 0
 
+      - name: Update PR body with commit list
+        env:
+          PR_NUMBER: ${{ steps.pr_info.outputs.pr_number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 250,
+            });
+
+            const bullets = commits.map(c => {
+              const title = c.commit.message.split('\n')[0];
+              return `- ${title} (${c.sha.slice(0, 7)})`;
+            }).join('\n');
+
+            const section = `## Commits\n\n${bullets}`;
+            const existing = pr.body ? pr.body.trim() : '';
+            const nextBody = existing
+              ? `${existing}\n\n${section}`
+              : section;
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: nextBody,
+            });
+
+            core.info(`Updated PR #${prNumber} body with ${commits.length} commits.`);
+
       - name: Announce release PR
+        env:
+          PR_NUMBER: ${{ steps.pr_info.outputs.pr_number }}
+          BRANCH_NAME: ${{ steps.pr_info.outputs.branch }}
         run: |
-          echo "Release PR from '${GITHUB_HEAD_REF}' into '${GITHUB_BASE_REF}'."
+          echo "Release PR #${PR_NUMBER} from '${BRANCH_NAME}' targeting main validated."
