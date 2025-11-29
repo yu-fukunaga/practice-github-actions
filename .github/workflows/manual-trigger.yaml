@@ -31,5 +31,11 @@ jobs:
           git checkout -b release-${{ inputs.release_date }}
           git push origin release-${{ inputs.release_date }}
       
+      - name: Merge develop into release branch
+        run: |
+          git fetch origin develop
+          git merge origin/develop -m "Merge develop into release-${{ inputs.release_date }}"
+          git push origin release-${{ inputs.release_date }}
+      
       - name: Success message
-        run: echo "Created branch release-${{ inputs.release_date }} from main"
+        run: echo "Created branch release-${{ inputs.release_date }} from main and merged develop"
