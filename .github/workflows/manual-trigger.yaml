@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -55,3 +56,41 @@ jobs:
       
       - name: Success message
         run: echo "Created branch ${{ env.RELEASE_BRANCH }} from main and merged develop"
+
+      - name: Create pull request to main
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = process.env.RELEASE_BRANCH;
+            const title = `Release: ${branch} -> main`;
+            const body = `Automated release PR created by workflow.\n\nSource: \`${branch}\`\nTarget: \`main\``;
+            try {
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                head: branch,
+                base: 'main',
+                body,
+                maintainer_can_modify: true,
+              });
+              core.info(`PR created: #${pr.number} -> ${pr.html_url}`);
+            } catch (e) {
+              if (e.status === 422) {
+                // Likely PR already exists or no diff; try to find existing
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  head: `${context.repo.owner}:${branch}`,
+                  base: 'main',
+                });
+                if (prs.length > 0) {
+                  core.info(`PR already exists: #${prs[0].number} -> ${prs[0].html_url}`);
+                } else {
+                  core.warning('No changes or unable to create PR.');
+                }
+              } else {
+                core.setFailed(`Failed to create PR: ${e.message}`);
+              }
+            }
