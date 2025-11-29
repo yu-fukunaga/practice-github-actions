@@ -1,31 +1,32 @@
 name: Check Release PR
 
 on:
-  push:
+  pull_request:
+    types: [opened]
     branches:
-      - 'release-*'
+      - main
 
 jobs:
-  on-create:
-    name: Handle new release branch
-    if: github.event.created == true
+  validate:
+    name: Validate release PR
+    if: startsWith(github.head_ref, 'release-')
     runs-on: ubuntu-latest
     steps:
       - name: Validate release branch name
         env:
-          BRANCH_NAME: ${{ github.ref_name }}
+          BRANCH_NAME: ${{ github.head_ref }}
         run: |
           if [[ ! "$BRANCH_NAME" =~ ^release-[0-9]{8}(-[0-9]+)?$ ]]; then
             echo "Branch '$BRANCH_NAME' does not match release-yyyymmdd or release-yyyymmdd-N."
             exit 1
           fi
 
-      - name: Checkout release branch
+      - name: Checkout PR head
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Announce release branch creation
+      - name: Announce release PR
         run: |
-          echo "Release branch '${GITHUB_REF_NAME}' created."
+          echo "Release PR from '${GITHUB_HEAD_REF}' into '${GITHUB_BASE_REF}'."
